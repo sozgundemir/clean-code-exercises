@@ -108,3 +108,8 @@ def test_cell_iterator() -> None:
         (cell._ix, cell._iy) for cell in grid.cells
     ))
     assert len(cell_indices_without_duplicates) == count
+
+test_number_of_cells()
+test_locate_cell()
+test_cell_center()
+test_cell_iterator()
