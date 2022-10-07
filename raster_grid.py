@@ -9,6 +9,10 @@
 from typing import Tuple
 from dataclasses import dataclass
 
+@dataclass
+class Point:
+    x: float
+    y: float
 
 class RasterGrid:
     @dataclass
@@ -17,16 +21,14 @@ class RasterGrid:
         _iy: int
 
     def __init__(self,
-                 x0: float,
-                 y0: float,
-                 x1: float,
-                 y1: float,
+                 lowerLeft: Point,
+                 size: Tuple[float, float],
                  nx: int,
                  ny: int) -> None:
-        self._x0 = x0
-        self._y0 = y0
-        self._x1 = x1
-        self._y1 = y1
+        self._lowerLeft = lowerLeft
+        self._upperRight = Point(
+            self._lowerLeft.x+size[0],
+            self._lowerLeft.y+size[1])
         self._nx = nx
         self._ny = ny
         self._nc = nx*ny
@@ -38,34 +40,34 @@ class RasterGrid:
     def nc(self) -> int:
         return self._nc
 
-    def getCellCenter(self, cell: Cell) -> Tuple[float, float]:
-        centerX = self._x0 + (float(cell._ix) + 0.5) * (self._x1 - self._x0) / self._nx
-        centerY = self._y0 + (float(cell._iy) + 0.5) * (self._y1 - self._y0) / self._ny
-        return (centerX, centerY)
+    def getCellCenter(self, cell: Cell) -> Point:
+        centerX = self._lowerLeft.x + (float(cell._ix) + 0.5) * (self._upperRight.x - self._lowerLeft.x) / self._nx
+        centerY = self._lowerLeft.y + (float(cell._iy) + 0.5) * (self._upperRight.y - self._lowerLeft.y) / self._ny
+        return Point(centerX, centerY)
 
     def getContainingCell(self, x: float, y: float) -> Cell:
         # returns the cell in the rastergrid containing the given position
         # Calculate the max step distance in x-, y- directions
         eps = 1e-6*max(
-            (self._x1-self._x0)/self._nx,
-            (self._y1-self._y0)/self._ny
+            (self._upperRight.x-self._lowerLeft.x)/self._nx,
+            (self._upperRight.y-self._lowerLeft.y)/self._ny
         )
         # return extreme index values if given x position is close to one of the
         # boundaries less than eps
-        if abs(x - self._x1) < eps:
+        if abs(x - self._upperRight.x) < eps:
             ix = self._nx - 1
-        elif abs(x - self._x0) < eps:
+        elif abs(x - self._lowerLeft.x) < eps:
             ix = 0
         else:
-            ix = int((x - self._x0)/((self._x1 - self._x0)/self._nx))
+            ix = int((x - self._lowerLeft.x)/((self._upperRight.x - self._lowerLeft.x)/self._nx))
         # return extreme index values if given y position is close to one of the
         # boundaries less than eps
-        if abs(y - self._y1) < eps:
+        if abs(y - self._upperRight.y) < eps:
             iy = self._ny - 1
-        elif abs(y - self._y0) < eps:
+        elif abs(y - self._lowerLeft.y) < eps:
             iy = 0
         else:
-            iy = int((y - self._y0)/((self._y1 - self._y0)/self._ny))
+            iy = int((y - self._lowerLeft.y)/((self._upperRight.y - self._lowerLeft.y)/self._ny))
         return self.Cell(ix, iy)
 
 def test_number_of_cells():
@@ -75,15 +77,15 @@ def test_number_of_cells():
     y0 = 0.0
     dx = 1.0
     dy = 1.0
-    assert RasterGrid(x0, y0, dx, dy, 10, 10).nc == 100
-    assert RasterGrid(x0, y0, dx, dy, 10, 20).nc == 200
-    assert RasterGrid(x0, y0, dx, dy, 20, 10).nc == 200
-    assert RasterGrid(x0, y0, dx, dy, 20, 20).nc == 400
+    assert RasterGrid(Point(x0, y0), (dx, dy), 10, 10).nc == 100
+    assert RasterGrid(Point(x0, y0), (dx, dy), 10, 20).nc == 200
+    assert RasterGrid(Point(x0, y0), (dx, dy), 20, 10).nc == 200
+    assert RasterGrid(Point(x0, y0), (dx, dy), 20, 20).nc == 400
 
 def test_locate_cell():
     # This function tests if the containing cell of a given position can be
     # received correctly
-    grid = RasterGrid(0.0, 0.0, 2.0, 2.0, 2, 2)
+    grid = RasterGrid(Point(0.0, 0.0), (2.0, 2.0), 2, 2)
     cell = grid.getContainingCell(0, 0)
     assert cell._ix == 0 and cell._iy == 0
     cell = grid.getContainingCell(1, 1)
@@ -99,19 +101,19 @@ def test_locate_cell():
 
 
 def test_cell_center():
-    grid = RasterGrid(0.0, 0.0, 2.0, 2.0, 2, 2)
+    grid = RasterGrid(Point(0.0, 0.0), (2.0, 2.0), 2, 2)
     cell = grid.getContainingCell(0.5, 0.5)
-    assert abs(grid.getCellCenter(cell)[0] - 0.5) < 1e-7 and abs(grid.getCellCenter(cell)[1] - 0.5) < 1e-7
+    assert abs(grid.getCellCenter(cell).x - 0.5) < 1e-7 and abs(grid.getCellCenter(cell).y - 0.5) < 1e-7
     cell = grid.getContainingCell(1.5, 0.5)
-    assert abs(grid.getCellCenter(cell)[0] - 1.5) < 1e-7 and abs(grid.getCellCenter(cell)[1] - 0.5) < 1e-7
+    assert abs(grid.getCellCenter(cell).x - 1.5) < 1e-7 and abs(grid.getCellCenter(cell).y - 0.5) < 1e-7
     cell = grid.getContainingCell(0.5, 1.5)
-    assert abs(grid.getCellCenter(cell)[0] - 0.5) < 1e-7 and abs(grid.getCellCenter(cell)[1] - 1.5) < 1e-7
+    assert abs(grid.getCellCenter(cell).x - 0.5) < 1e-7 and abs(grid.getCellCenter(cell).y - 1.5) < 1e-7
     cell = grid.getContainingCell(1.5, 1.5)
-    assert abs(grid.getCellCenter(cell)[0] - 1.5) < 1e-7 and abs(grid.getCellCenter(cell)[1] - 1.5) < 1e-7
+    assert abs(grid.getCellCenter(cell).x - 1.5) < 1e-7 and abs(grid.getCellCenter(cell).y - 1.5) < 1e-7
 
 
 def test_cell_iterator() -> None:
-    grid = RasterGrid(0.0, 0.0, 2.0, 2.0, 2, 2)
+    grid = RasterGrid(Point(0.0, 0.0), (2.0, 2.0), 2, 2)
     count = sum(1 for _ in grid.cells)
     assert count == grid.nc
 
