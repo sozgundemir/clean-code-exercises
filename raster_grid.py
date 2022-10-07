@@ -39,10 +39,9 @@ class RasterGrid:
         return self._nc
 
     def getCellCenter(self, cell: Cell) -> Tuple[float, float]:
-        return (
-            self._x0 + (float(cell._ix) + 0.5)*(self._x1 - self._x0)/self._nx,
-            self._y0 + (float(cell._iy) + 0.5)*(self._y1 - self._y0)/self._ny
-        )
+        centerX = self._x0 + (float(cell._ix) + 0.5) * (self._x1 - self._x0) / self._nx
+        centerY = self._y0 + (float(cell._iy) + 0.5) * (self._y1 - self._y0) / self._ny
+        return (centerX, centerY)
 
     def getContainingCell(self, x: float, y: float) -> Cell:
         # returns the cell in the rastergrid containing the given position
