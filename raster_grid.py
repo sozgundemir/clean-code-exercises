@@ -29,10 +29,14 @@ class RasterGrid:
         self._y1 = y1
         self._nx = nx
         self._ny = ny
-        self.nc = nx*ny
+        self._nc = nx*ny
         self.cells = [
             self.Cell(i, j) for i in range(nx) for j in range(ny)
         ]
+
+    @property
+    def nc(self) -> int:
+        return self._nc
 
     def c(self, cell: Cell) -> Tuple[float, float]:
         return (
