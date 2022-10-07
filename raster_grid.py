@@ -6,7 +6,8 @@
 #     - clean up the test code where beneficial
 #     - make sure to put each individual change in a small, separate commit
 #     - take care that on each commit, all tests pass
-from typing import Tuple
+
+from typing import Tuple, List, Iterable
 from dataclasses import dataclass
 
 @dataclass
@@ -31,13 +32,16 @@ class RasterGrid:
             self._lowerLeft.y+size[1])
         self._nx = nx
         self._ny = ny
-        self.cells = [
-            self.Cell(i, j) for i in range(nx) for j in range(ny)
-        ]
 
     @property
     def numberOfCells(self) -> int:
         return self._nx*self._ny
+
+    @property
+    def cells(self) -> Iterable[Cell]:
+        return (
+            self.Cell(i, j) for i in range(self._nx) for j in range(self._ny)
+            )
 
     def getCellCenter(self, cell: Cell) -> Point:
         centerX = self._lowerLeft.x + (float(cell._ix) + 0.5) * (self._upperRight.x - self._lowerLeft.x) / self._nx
@@ -114,7 +118,7 @@ def test_cell_center():
 def test_cell_iterator() -> None:
     grid = RasterGrid(Point(0.0, 0.0), (2.0, 2.0), 2, 2)
     count = sum(1 for _ in grid.cells)
-    assert count == grid.nc
+    assert count == grid.numberOfCells
 
     cell_indices_without_duplicates = set(list(
         (cell._ix, cell._iy) for cell in grid.cells
