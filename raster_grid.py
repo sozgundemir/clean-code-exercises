@@ -31,14 +31,13 @@ class RasterGrid:
             self._lowerLeft.y+size[1])
         self._nx = nx
         self._ny = ny
-        self._nc = nx*ny
         self.cells = [
             self.Cell(i, j) for i in range(nx) for j in range(ny)
         ]
 
     @property
-    def nc(self) -> int:
-        return self._nc
+    def numberOfCells(self) -> int:
+        return self._nx*self._ny
 
     def getCellCenter(self, cell: Cell) -> Point:
         centerX = self._lowerLeft.x + (float(cell._ix) + 0.5) * (self._upperRight.x - self._lowerLeft.x) / self._nx
@@ -77,10 +76,10 @@ def test_number_of_cells():
     y0 = 0.0
     dx = 1.0
     dy = 1.0
-    assert RasterGrid(Point(x0, y0), (dx, dy), 10, 10).nc == 100
-    assert RasterGrid(Point(x0, y0), (dx, dy), 10, 20).nc == 200
-    assert RasterGrid(Point(x0, y0), (dx, dy), 20, 10).nc == 200
-    assert RasterGrid(Point(x0, y0), (dx, dy), 20, 20).nc == 400
+    assert RasterGrid(Point(x0, y0), (dx, dy), 10, 10).numberOfCells == 100
+    assert RasterGrid(Point(x0, y0), (dx, dy), 10, 20).numberOfCells == 200
+    assert RasterGrid(Point(x0, y0), (dx, dy), 20, 10).numberOfCells == 200
+    assert RasterGrid(Point(x0, y0), (dx, dy), 20, 20).numberOfCells == 400
 
 def test_locate_cell():
     # This function tests if the containing cell of a given position can be
